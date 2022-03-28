@@ -12,7 +12,6 @@ Adafruit_BME280 bme;
 // const char* password = "REPLACE_WITH_YOUR_PASSWORD";
 
 
-
 AsyncWebServer server(80);
 // Events
 AsyncEventSource events("/events");
