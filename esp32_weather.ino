@@ -4,11 +4,8 @@
 #include <Adafruit_Sensor.h>
 #include "SPIFFS.h"
 #include <ESPAsyncWebServer.h>
-#include <ESPmDNS.h>
 
-Adafruit_BME280 bme; // I2C
-// Adafruit_BME280 bme(BME_CS); // hardware SPI
-// Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK); // software SPI
+Adafruit_BME280 bme; 
 
 // Replace with your network credentials
 // const char* ssid     = "REPLACE_WITH_YOUR_SSID";
@@ -25,9 +22,6 @@ void setup()
   Serial.begin(115200);
   bool status;
 
-  // default settings
-  // (you can also pass in a Wire library object like &Wire2)
-  // status = bme.begin();
   if (!bme.begin(0x76))
   {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
@@ -82,12 +76,7 @@ void setup()
   });
   server.begin();
 }
-/*
-  bme.readTemperature() reading temperature in Celcius
-  bme.readPressure()
-  bme.readAltitude(seaLevel)
-  bme.readHumidity()
-*/
+
 String processor(const String &var)
 {
   // Serial.println(var);
