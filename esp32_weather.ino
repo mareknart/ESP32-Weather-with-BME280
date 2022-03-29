@@ -4,8 +4,9 @@
 #include <Adafruit_Sensor.h>
 #include "SPIFFS.h"
 #include <ESPAsyncWebServer.h>
+#include <Arduino_JSON.h>
 
-Adafruit_BME280 bme; 
+Adafruit_BME280 bme;
 
 // Replace with your network credentials
 // const char* ssid     = "REPLACE_WITH_YOUR_SSID";
@@ -15,6 +16,11 @@ Adafruit_BME280 bme;
 AsyncWebServer server(80);
 // Events
 AsyncEventSource events("/events");
+
+JSONVar readings;
+
+unsigned long lastTime = 0;
+unsigned long timerDelay = 10000;
 
 void setup()
 {
@@ -42,37 +48,31 @@ void setup()
     delay(500);
     Serial.print(".");
   }
-  // Starting mDNS
-  if (!MDNS.begin("pogoda"))
-  {
-    Serial.println("Error starting mDNS");
-    return;
-  }
   // Print local IP address and start web server
   Serial.println("");
   Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    request->send(SPIFFS, "/index.html", "text/html", false, processor);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/index.html", "text/html", false, processor); });
+  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/favicon.ico", "image/ico"); });
+  server.on("/logic.js", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/logic.js", "text/javascript"); });
+  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "text/plain", String(bme.readTemperature()).c_str()); });
+  server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "text/plain", String(bme.readHumidity()).c_str()); });
+  server.on("/pressure", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "text/plain", String(bme.readPressure() / 100.0F).c_str()); });
+  
+  server.on("/readings", HTTP_GET, [](AsyncWebServerRequest *request){
+    String json = getPressureReading();
+    request->send(200, "application/json", json);
+    json = String();
   });
-  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    request->send(SPIFFS, "/favicon.ico", "image/ico");
-  });
-  server.on("/logic.js", HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(SPIFFS, "/logic.js", "text/javascript");
-  });
-  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(200, "text/plain", String(bme.readTemperature()).c_str());
-  });
-  server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(200, "text/plain", String(bme.readHumidity()).c_str());
-  });
-  server.on("/pressure", HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(200, "text/plain", String(bme.readPressure() / 100.0F).c_str());
-  });
+
+  server.addHandler(&events);
   server.begin();
 }
 
@@ -94,8 +94,16 @@ String processor(const String &var)
   return String();
 }
 
+String getPressureReading()
+{
+  readings["pressure"] = String(bme.readPressure() / 100.0F);
+
+  String jsonString = JSON.stringify(readings);
+  return jsonString;
+}
 void loop()
 {
+  /*
   Serial.print("Temperatura: ");
   Serial.print(bme.readTemperature());
   Serial.println(" °C");
@@ -106,5 +114,11 @@ void loop()
   Serial.print(bme.readPressure() / 100);
   Serial.println(" hPa");
   Serial.println("=====================");
-  delay(10000);
+  delay(10000);*/
+  if ((millis() - lastTime) > timerDelay) {
+    // Send Events to the client with the Sensor Readings Every 10 seconds
+    events.send("ping",NULL,millis());
+    events.send(getPressureReading().c_str(),"new_readings" ,millis());
+    lastTime = millis();
+  }
 }
