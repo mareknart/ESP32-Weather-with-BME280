@@ -14,13 +14,8 @@ Adafruit_BME280 bme;
 
 
 AsyncWebServer server(80);
-// Events
-AsyncEventSource events("/events");
 
 JSONVar readings;
-
-unsigned long lastTime = 0;
-unsigned long timerDelay = 10000;
 
 void setup()
 {
@@ -65,14 +60,7 @@ void setup()
             { request->send(200, "text/plain", String(bme.readHumidity()).c_str()); });
   server.on("/pressure", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/plain", String(bme.readPressure() / 100.0F).c_str()); });
-  
-  server.on("/readings", HTTP_GET, [](AsyncWebServerRequest *request){
-    String json = getPressureReading();
-    request->send(200, "application/json", json);
-    json = String();
-  });
-
-  server.addHandler(&events);
+ 
   server.begin();
 }
 
@@ -94,13 +82,6 @@ String processor(const String &var)
   return String();
 }
 
-String getPressureReading()
-{
-  readings["pressure"] = String(bme.readPressure() / 100.0F);
-
-  String jsonString = JSON.stringify(readings);
-  return jsonString;
-}
 void loop()
 {
   /*
@@ -114,11 +95,6 @@ void loop()
   Serial.print(bme.readPressure() / 100);
   Serial.println(" hPa");
   Serial.println("=====================");
-  delay(10000);*/
-  if ((millis() - lastTime) > timerDelay) {
-    // Send Events to the client with the Sensor Readings Every 10 seconds
-    events.send("ping",NULL,millis());
-    events.send(getPressureReading().c_str(),"new_readings" ,millis());
-    lastTime = millis();
-  }
+  delay(10000)
+  */
 }

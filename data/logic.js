@@ -1,39 +1,10 @@
-window.addEventListener('load', getReadings);
-
-setInterval(function () {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            document.getElementById("temperature").innerHTML = String(parseFloat(this.responseText).toFixed(1));
-        }
-    };
-    xhttp.open("GET", "/temperature", true);
-    xhttp.send();
-}, 10000);
-setInterval(function () {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            document.getElementById("humidity").innerHTML = String(parseFloat(this.responseText).toFixed(1));
-        }
-    };
-    xhttp.open("GET", "/humidity", true);
-    xhttp.send();
-}, 10000);
-setInterval(function () {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            document.getElementById("pressure").innerHTML = String(parseFloat(this.responseText).toFixed(1));
-        }
-    };
-    xhttp.open("GET", "/pressure", true);
-    xhttp.send();
-}, 10000);
-
-
 //chart code
 //chart config
+Highcharts.setOptions({
+    time: {
+        timezoneOffset: -120 //Add your time zone offset here in minutes
+    }
+});
 var chartT = new Highcharts.Chart({
     chart: {
         renderTo: 'pressure_chart'
@@ -67,40 +38,47 @@ var chartT = new Highcharts.Chart({
     }
 })
 
-function plotPressure(jsonValue) {
 
-    var keys = Object.keys(jsonValue);
-    console.log("klucz " + keys);
-    console.log(keys.length);
-
-    //for (var i = 0; i < keys.length; i++) {
-        var x = (new Date()).getTime();
-        console.log(x);
-        const key = keys[0];
-        var y = Number(jsonValue[key]);
-        console.log(y);
-
-        if (chartT.series[0].data.length > 4320) {
-            chartT.series[0].addPoint([x, y], true, true, true);
-        } else {
-            chartT.series[0].addPoint([x, y], true, false, true);
-        }
-
-    //}
-}
-
-function getReadings() {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
+setInterval(function () {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var myObj = JSON.parse(this.responseText);
-            console.log(myObj);
-            plotPressure(myObj);
+            document.getElementById("temperature").innerHTML = String(parseFloat(this.responseText).toFixed(1));
         }
     };
-    xhr.open("GET", "/readings", true);
-    xhr.send();
-}
+    xhttp.open("GET", "/temperature", true);
+    xhttp.send();
+}, 10000);
+setInterval(function () {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("humidity").innerHTML = String(parseFloat(this.responseText).toFixed(1));
+        }
+    };
+    xhttp.open("GET", "/humidity", true);
+    xhttp.send();
+}, 10000);
+setInterval(function () {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            var response = this.responseText;
+            var x = (new Date()).getTime(),
+                y = parseFloat(response);
+            if (y > 900) {
+                if (chartT.series[0].data.length > 4320) {
+                    chartT.series[0].addPoint([x, y], true, true, true);
+                } else {
+                    chartT.series[0].addPoint([x, y], true, false, true);
+                }
+                document.getElementById("pressure").innerHTML = String(parseFloat(response).toFixed(1));
+            }
+        }
+    };
+    xhttp.open("GET", "/pressure", true);
+    xhttp.send();
+}, 10000);
 
 if (!!window.EventSource) {
     var source = new EventSource('/events');
