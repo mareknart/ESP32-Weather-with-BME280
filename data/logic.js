@@ -25,7 +25,7 @@ var chartT = new Highcharts.Chart({
     xAxis: {
         type: 'datetime',
         dateTimeLabelFormats: {
-            second: '%H:%M:%S'
+            day: '%e.%b %H:%M'
         }
     },
     yAxis: {
