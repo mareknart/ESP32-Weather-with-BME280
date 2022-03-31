@@ -23,19 +23,12 @@ struct tm timeinfo;
 
 AsyncWebServer server(80);
 
-//JSONVar readings;
-
 void printLocalTime() {
-  
   if (!getLocalTime(&timeinfo)) {
     Serial.println("Failed to obtain time");
   }
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-  setTime(timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec,timeinfo.tm_mday, timeinfo.tm_mon+1, timeinfo.tm_year+1900);
-  //Serial.println((timeinfo.tm_year) + 1900);
-  /*.tm_mon+1
-     .tm_mday, tm_hour, tm_min, tm_sec
-  */
+  setTime(timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900);
 }
 
 String processor(const String &var)
@@ -56,18 +49,22 @@ String processor(const String &var)
   return String();
 }
 
-String pressureJson(){
-  DynamicJsonDocument doc(1024);
-  /*
-  String monthInfo = String((timeinfo.tm_mon+1));
-  String dayInfo = String(timeinfo.tm_mday);
-  String hourInfo = String(timeinfo.tm_hour);
-  String minInfo = String(timeinfo.tm_min);
-  String secInfo = String(timeinfo.tm_sec);
-  String timeStamp = String(dayInfo+"."+monthInfo+" "+hourInfo+":"+minInfo+":"+secInfo);*/
-  String timeStamp = String(String(day())+"."+String(month())+" "+String(hour())+":"+String(minute())+":"+String(second()));
-  doc["time"] = timeStamp;
-  doc["pressure"] = bme.readPressure()/100.0F;
+String formatDate(int date) {
+  String formattedDate = String(date);
+  if (date < 10) {
+    formattedDate = "0" + String(date);
+  }
+  return formattedDate;
+}
+
+String pressureJson() {
+  DynamicJsonDocument doc(12288);
+  String timeStamp = String(formatDate(day()) + "." + formatDate(month()) + " " + formatDate(hour()) + ":" + formatDate(minute()) + ":" + formatDate(second()));
+  int pressure = bme.readPressure() / 100.0;
+  if (pressure > 900) {
+    doc["time"] = timeStamp;
+    doc["pressure"] = pressure;
+  }
   String output;
   serializeJson(doc, output);
   Serial.println(output);
@@ -121,6 +118,10 @@ void setup()
   {
     request->send(SPIFFS, "/logic.js", "text/javascript");
   });
+  server.on("/data.json", HTTP_GET, [](AsyncWebServerRequest * request)
+  {
+    request->send(SPIFFS, "/data.json", "application/json");
+  });
   server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(200, "text/plain", String(bme.readTemperature()).c_str());
@@ -131,24 +132,11 @@ void setup()
   });
   server.on("/pressure", HTTP_GET, [](AsyncWebServerRequest * request)
   { request->send(200, "text/plain", String(bme.readPressure() / 100.0F).c_str());
-  pressureJson();
+    pressureJson();
   });
   server.begin();
 }
 
 void loop()
 {
-  /*
-    Serial.print("Temperatura: ");
-    Serial.print(bme.readTemperature());
-    Serial.println(" °C");
-    Serial.print("Wilgotnosc: ");
-    Serial.print(bme.readHumidity());
-    Serial.println(" %");
-    Serial.print("Cisnienie: ");
-    Serial.print(bme.readPressure() / 100);
-    Serial.println(" hPa");
-    Serial.println("=====================");
-    delay(10000)
-  */
 }
