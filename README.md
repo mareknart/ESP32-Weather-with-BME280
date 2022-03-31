@@ -5,10 +5,9 @@ This code can be use with EPS8266 but you need to use different plugin for data 
 
 <h2>Connection sketch</h2>
 
-![obraz](https://user-images.githubusercontent.com/34139904/161020212-db7cf6ac-1565-4fa2-a167-6ac345bfd987.png)
+![ESP32_BME280](https://user-images.githubusercontent.com/34139904/161029916-f7418d3a-1db4-403b-87f1-cb01e197679c.jpg)
 
 
-Some BME280 sensors have only 4 pins (VIN, GND, SCL, SDA)
 
 <h2>Arduino code setup</h2>
 
