@@ -17,9 +17,13 @@ Adafruit_BME280 bme;
 
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 3600;
-const int daylightOffset_sec = 3600;
+const int daylightOffset_sec = -3600;
 
 struct tm timeinfo;
+unsigned long savePeriod = 1800;  //in seconds
+unsigned long initTime;
+
+DynamicJsonDocument doc(16384);
 
 AsyncWebServer server(80);
 
@@ -28,6 +32,7 @@ void printLocalTime() {
     Serial.println("Failed to obtain time");
   }
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+
   setTime(timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900);
 }
 
@@ -49,24 +54,27 @@ String processor(const String &var)
   return String();
 }
 
-String formatDate(int date) {
-  String formattedDate = String(date);
-  if (date < 10) {
-    formattedDate = "0" + String(date);
+void pressureJson() {
+  File dataFile = SPIFFS.open("/data.json", "w");
+  if (!dataFile) {
+    Serial.println("Failed to open data file");
+    return;
   }
-  return formattedDate;
-}
 
-String pressureJson() {
-  DynamicJsonDocument doc(12288);
-  String timeStamp = String(formatDate(day()) + "." + formatDate(month()) + " " + formatDate(hour()) + ":" + formatDate(minute()) + ":" + formatDate(second()));
+  unsigned long timeStamp = now();
   int pressure = bme.readPressure() / 100.0;
+  if (doc.size() > 335) {
+    doc.remove(0);
+  }
   if (pressure > 900) {
-    doc["time"] = timeStamp;
-    doc["pressure"] = pressure;
+    JsonObject arrayData = doc.createNestedObject();
+    arrayData["time"] = timeStamp;
+    arrayData["pressure"] = pressure;
   }
   String output;
   serializeJson(doc, output);
+  serializeJson(doc, dataFile);
+  dataFile.close();
   Serial.println(output);
 }
 
@@ -104,7 +112,18 @@ void setup()
 
   //init time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  
   printLocalTime();
+  
+  //last update from JSON
+  initTime = doc[doc.size()-1]["time"];
+
+  //reading previous data from JSON
+  File dataFile = SPIFFS.open("/data.json", "r");
+  DeserializationError error = deserializeJson(doc, dataFile);
+  String output;
+  size_t errorSerialize = serializeJson(doc, output);
+  dataFile.close();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
   {
@@ -132,11 +151,16 @@ void setup()
   });
   server.on("/pressure", HTTP_GET, [](AsyncWebServerRequest * request)
   { request->send(200, "text/plain", String(bme.readPressure() / 100.0F).c_str());
-    pressureJson();
+
   });
   server.begin();
 }
 
 void loop()
 {
+  unsigned long actualTime = now();
+  if ((initTime + savePeriod) < actualTime) {
+    pressureJson();
+    initTime = now();
+  }
 }

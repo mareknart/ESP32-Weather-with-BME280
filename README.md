@@ -21,11 +21,11 @@ IP address has been printed in serial monitor
 
 <h2>❗❗ Ongoing improvements ❗❗</h2>
 
-Below planned list for improvements:
+Planned list for improvements:
 
 <ul>
   <li><strike>Implementing time synchornisation via UTP service</strike> DONE 👍</li>
-  <li>Save pressure reading to JSON file and display it on web page instead of actual readings which are not saved</li>
+  <li><strike>Save pressure reading to JSON file and display it on web page instead of actual readings which are not saved</strike> DONE 👍</li>
   <li>Add solar power supply to use this station outdoor</li>
   <li>Minimalise power consumption by implementing deep sleep mode or something simmilar 😄 to extend battery life</li>
 </ul>
