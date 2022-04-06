@@ -1,43 +1,11 @@
 readingPressure();
-translation();
+translation()
 
 Highcharts.setOptions({
     time: {
         timezoneOffset: -120 //Add your time zone offset here in minutes
     }
 });
-var chartT = new Highcharts.Chart({
-    chart: {
-        renderTo: 'pressure_chart'
-    },
-    series: [{
-        name: chartTranslate("chartLegend"),
-        type: 'line',
-        color: '#101D42',
-        marker: {
-            symbol: 'circle',
-            radius: 3,
-            fillColor: '#101D42'
-        }
-    }],
-    title: {
-        text: chartTranslate("chartName")
-    },
-    xAxis: {
-        type: 'datetime',
-        dateTimeLabelFormats: {
-            day: '%d.%m.%y %H:%M:%S'
-        }
-    },
-    yAxis: {
-        title: {
-            text: chartTranslate("yAxis")
-        }
-    },
-    credits: {
-        enabled: false
-    }
-})
 
 setInterval(function () {
     var xhttp = new XMLHttpRequest();
@@ -65,26 +33,54 @@ setInterval(function () {
 
 function readingPressure() {
     var xhttp = new XMLHttpRequest();
+    arr = [];
+
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var response = this.responseText;
-
-            //getting data from json file
             readJsonFile("data.json", function (text) {
-                var data = JSON.parse(text);
+                data = JSON.parse(text);
                 data.forEach(item => {
-                    var tempDate = item.time;
-                    var x = tempDate * 1000,
-                        y = item.pressure;
-                    if (chartT.series[0].data.length > 4320) {
-                        chartT.series[0].addPoint([x, y], true, true, true);
-                    } else {
-                        chartT.series[0].addPoint([x, y], true, false, true);
-                    }
-                    
+                    arr.push([(item.time) * 1000, item.pressure]);
                 });
+
+                var chartT = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'pressure_chart',
+                        type: 'spline'
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        dateTimeLabelFormats: {
+                            day: '%d.%m.%y %H:%M:%S'
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: chartTranslate("yAxis")
+                        }
+                    },
+                    series: [{
+                        name: chartTranslate("chartLegend"),
+                        data: arr,
+                        color: '#101D42',
+                        marker: {
+                            symbol: 'circle',
+                            radius: 3,
+                            fillColor: '#101D42'
+                        }
+                    }],
+                    title: {
+                        text: chartTranslate("chartName")
+                    },
+                    credits: {
+                        enabled: false
+                    }
+                })
+                chartT.showLoading(chartTranslate("infoMessage"));
+                chartT.hideLoading();
                 document.getElementById("pressure").innerHTML = String((data[data.length - 1].pressure));
-                const today = new Date((data[data.length - 1].time)*1000);
+                const today = new Date((data[data.length - 1].time) * 1000);
                 document.getElementById("lastUpdate").innerHTML = today.toLocaleString();
             })
         }
@@ -111,12 +107,14 @@ function chartTranslate(name) {
     var plLanguage = {
         chartName: "Poprzednie wskazania",
         yAxis: "Ciśnienie hPa",
-        chartLegend: "Ciśnienie"
+        chartLegend: "Ciśnienie",
+        infoMessage: "Ładuję dane. Proszę czekać..."
     };
     var enLanguage = {
         chartName: "Previous readings",
         yAxis: "Pressure hPa",
-        chartLegend: "Pressure"
+        chartLegend: "Pressure",
+        infoMessage: "Loading data. Please wait..."
     };
     var language = navigator.language;
     if (language == "pl" || language == "pl-PL") {

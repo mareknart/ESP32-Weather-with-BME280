@@ -21,8 +21,11 @@ const int daylightOffset_sec = -3600;
 
 struct tm timeinfo;
 unsigned long savePeriod = 1800;  //in seconds
+int noOfSamples = 335; //7 days with sample every 30 min 
 unsigned long initTime;
+File dataFile;
 
+//Calculate correct doc size for your file
 DynamicJsonDocument doc(16384);
 
 AsyncWebServer server(80);
@@ -54,8 +57,9 @@ String processor(const String &var)
   return String();
 }
 
+
 void pressureJson() {
-  File dataFile = SPIFFS.open("/data.json", "w");
+  dataFile = SPIFFS.open("/data.json", "w");
   if (!dataFile) {
     Serial.println("Failed to open data file");
     return;
@@ -63,7 +67,7 @@ void pressureJson() {
 
   unsigned long timeStamp = now();
   int pressure = bme.readPressure() / 100.0;
-  if (doc.size() > 335) {
+  if (doc.size() > noOfSamples) {
     doc.remove(0);
   }
   if (pressure > 900) {
@@ -77,7 +81,6 @@ void pressureJson() {
   dataFile.close();
   Serial.println(output);
 }
-
 void setup()
 {
   Serial.begin(115200);
@@ -112,17 +115,22 @@ void setup()
 
   //init time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  
+
   printLocalTime();
-  
+
   //last update from JSON
-  initTime = doc[doc.size()-1]["time"];
+  initTime = doc[doc.size() - 1]["time"];
 
   //reading previous data from JSON
-  File dataFile = SPIFFS.open("/data.json", "r");
+  dataFile = SPIFFS.open("/data.json");
+  if (!dataFile) {
+    Serial.println("Failed to open data file");
+    return;
+  }
   DeserializationError error = deserializeJson(doc, dataFile);
   String output;
   size_t errorSerialize = serializeJson(doc, output);
+  Serial.println(output);
   dataFile.close();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
