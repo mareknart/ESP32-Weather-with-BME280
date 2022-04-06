@@ -2,10 +2,9 @@
 This is simple weather station based on ESP32 microcontroller and BME280 sensor. ESP creating web server and use page files from 'data' directory. To upload data to ESP32 you need to use Arduino IDE plugin for ESP32.
 Plugin and instalation guide for ESP32 can be found <a href="https://github.com/me-no-dev/arduino-esp32fs-plugin">here</a>.
 This code can be use with EPS8266 but you need to use different plugin for data uploading <a href="https://github.com/esp8266/arduino-esp8266fs-plugin">here</a>
+</br></br>
 
 ![obraz](https://user-images.githubusercontent.com/34139904/162069942-11b7cd89-81db-4d1d-8ebd-5d6c72671d93.png)
-
-
 
 
 <h2>Connection sketch</h2>
