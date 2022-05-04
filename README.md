@@ -30,6 +30,7 @@ Planned list for improvements:
 <ul>
   <li><strike>Implementing time synchornisation via UTP service</strike> DONE 👍</li>
   <li><strike>Save pressure reading to JSON file and display it on web page instead of actual readings which are not saved</strike> DONE 👍</li>
+  <li>Add captive portal as default AP mode and WiFi manager to connect ESP to internet through WiFi</li>
   <li>Add solar power supply to use this station outdoor</li>
   <li>Minimalise power consumption by implementing deep sleep mode or something simmilar 😄 to extend battery life</li>
 </ul>
